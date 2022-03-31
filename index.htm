@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<style>
+#messages
+{
+background-color:yellow;
+font-size:3;
+font-weight:bold;
+line-height:140%;
+}
+#status
+{
+background-color:red;
+font-size:4;
+font-weight:bold;
+color:white;
+line-height:140%;
+}
+#map 
+{ 
+height: 400px;
+width: 400px; 
+}
+
+
+</style>
+  <head>
+    <title>Websockets Using JavaScript MQTT Client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+ 	<script type = "text/javascript" src = "https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+	integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+	crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+	<script src='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.js'></script>
+	<link href='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css' rel='stylesheet' />
+
+    <script type = "text/javascript">
+	function onConnectionLost(){
+	console.log("connection lost");
+	document.getElementById("status").innerHTML = "Connection Lost";
+	document.getElementById("messages").innerHTML ="Connection Lost";
+	connected_flag=0;
+	}
+	function onFailure(message) {
+		console.log("Failed");
+		document.getElementById("messages").innerHTML = "Connection Failed- Retrying";
+        setTimeout(MQTTconnect, reconnectTimeout);
+    }
+	function onMessageArrived(r_message){
+		out_msg="Message received "+r_message.payloadString+"<br>";
+		out_msg=out_msg+"Message received Topic "+r_message.destinationName;
+		//console.log("Message received ",r_message.payloadString);
+		out_topic=r_message.destinationName;
+		console.log(out_msg);
+		document.getElementById("messages").innerHTML =out_msg;
+		
+	}
+	function onConnected(recon,url){
+	console.log(" in onConnected " +reconn);
+	}
+	function onConnect() {
+	  // Once a connection has been made, make a subscription and send a message.
+	document.getElementById("messages").innerHTML ="Connected to "+host +"on port "+port;
+	connected_flag=1
+	document.getElementById("status").innerHTML = "Connected";
+	console.log("on Connect "+connected_flag);
+	//mqtt.subscribe("sensor1");
+	//message = new Paho.MQTT.Message("Hello World");
+	//message.destinationName = "sensor1";
+	//mqtt.send(message);
+	  }
+
+    function MQTTconnect() {
+	document.getElementById("messages").innerHTML ="";
+	var s = document.forms["connform"]["server"].value;
+	var p = document.forms["connform"]["port"].value;
+	if (p!="")
+	{
+	console.log("ports");
+		port=parseInt(p);
+		console.log("port" +port);
+		}
+	if (s!="")
+	{
+		host=s;
+		console.log("host");
+		}
+	console.log("connecting to "+ host +" "+ port);
+	var x=Math.floor(Math.random() * 10000); 
+	var cname="orderform-"+x;
+	mqtt = new Paho.MQTT.Client(host,port,cname);
+	//document.write("connecting to "+ host);
+	var options = {
+        timeout: 10,
+		onSuccess: onConnect,
+		onFailure: onFailure,
+      
+     };
+	
+        mqtt.onConnectionLost = onConnectionLost;
+        mqtt.onMessageArrived = onMessageArrived;
+		//mqtt.onConnected = onConnected;
+
+	mqtt.connect(options);
+	return false;
+  
+ 
+	}
+	function sub_topics(){
+		document.getElementById("messages").innerHTML ="";
+		if (connected_flag==0){
+		out_msg="<b>Not Connected so can't subscribe</b>"
+		console.log(out_msg);
+		document.getElementById("messages").innerHTML = out_msg;
+		return false;
+		}
+		var stopic= document.forms["subs"]["Stopic"].value;
+		console.log("Subscribing to topic ="+stopic);
+		mqtt.subscribe(stopic);
+		return false;
+		
+	}
+	function send_message(){
+		document.getElementById("messages").innerHTML ="";
+		if (connected_flag==0){
+		out_msg="<b>Not Connected so can't send</b>"
+		console.log(out_msg);
+		document.getElementById("messages").innerHTML = out_msg;
+		return false;
+		}
+		var msg = document.forms["smessage"]["message"].value;
+		console.log(msg);
+
+		var topic = document.forms["smessage"]["Ptopic"].value;
+		message = new Paho.MQTT.Message(msg);
+		if (topic=="")
+			message.destinationName = "test-topic"
+		else
+			message.destinationName = topic;
+		mqtt.send(message);
+		return false;
+	}
+
+	
+	
+    </script>
+
+  </head>
+  <body>
+    <h1>Websockets Using JavaScript MQTT Client</h1>
+	
+	    <script type = "text/javascript">
+//ll
+
+</script>
+	<script>
+	var connected_flag=0	
+	var mqtt;
+    var reconnectTimeout = 2000;
+	//var host="192.168.1.41";
+	//var port=9001;
+
+	</script>
+ 
+<div id="status">Connection Status: Not Connected</div>
+
+<br>
+<form name="connform" action="" onsubmit="return MQTTconnect()">
+
+Server:  <input type="text" name="server"><br><br>
+Port:    <input type="text" name="port"><br><br>
+<input type="submit" value="Connect">
+</form>
+<hr>
+<form name="subs" action="" onsubmit="return sub_topics()">
+Subscribe Topic:   <input type="text" name="Stopic"><br><br>
+
+<input type="submit" value="Subscribe">
+</form> 
+<hr>
+<form name="smessage" action="" onsubmit="return send_message()">
+
+Message: <input type="text" name="message"><br><br>
+Publish Topic:   <input type="text" name="Ptopic"><br><br>
+<input type="submit" value="Submit">
+</form>
+Messages:<p id="messages"></p>
+
+<button id = "find-me">Show my location</button><br/>
+    <p id = "status"></p>
+    <p id = "map-link"></p>
+
+<div id="map"></div>
+<!-- <div id="new_map"></div> -->
+    
+
+<script type="text/javascript">
+function geoFindMe() {
+if (connected_flag==0){
+	out_msg="<b>Not Connected so can't share</b>"
+	console.log(out_msg);
+	document.getElementById("messages").innerHTML = out_msg;
+	return false;
+}
+const status = document.querySelector('#status');
+const mapLink = document.querySelector('#map-link');
+
+mapLink.href = '';
+mapLink.textContent = '';
+
+function success(position) {
+  const latitude  = position.coords.latitude;
+  const longitude = position.coords.longitude;
+
+  status.textContent = '';
+  
+//  mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
+  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=8ad7c4064aba4bef601b02451ee208d4`)
+  .then((response) => {
+	return response.json()
+  })
+  .then((data) => {
+    console.log(data);
+	tmp = data.main.temp;
+	mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °, Temperature: ${tmp} °C`;
+	var info = `{Lat: ${latitude} °, Long: ${longitude} °, Temperature: ${tmp} °C}`;
+	var my_topic = "ENGO651/Zalak_Bhavsar/my_temperature";
+    console.log(JSON.stringify(info));
+    message = new Paho.MQTT.Message(info);
+    message.destinationName = my_topic;
+    mqtt.send(message);
+    L.mapbox.accessToken = 'pk.eyJ1IjoiemFsYWtiMTQiLCJhIjoiY2t6dTBzYThuMWo5djJ3cnh3bDl3dGNjeSJ9.gidlTMdQBoOF23iwCpBHFg';
+    var map = L.map('map').setView([latitude, longitude], 10);
+    L.mapbox.styleLayer('mapbox://styles/zalakb14/ckzwvwiyf005x14quhrk8p3yg').addTo(map);
+	if (tmp>=-40 && tmp<10){
+		var blueIcon = new L.Icon({
+			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+			shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			iconSize: [25, 41],
+			iconAnchor: [12, 41],
+			popupAnchor: [1, -34],
+			shadowSize: [41, 41]});
+		var marker = L.marker([latitude, longitude], {icon: blueIcon}).addTo(map);
+	}
+	else if (tmp>=10 && tmp <30){
+		var greenIcon = new L.Icon({
+			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+			shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			iconSize: [25, 41],
+			iconAnchor: [12, 41],
+			popupAnchor: [1, -34],
+			shadowSize: [41, 41]});
+		var marker = L.marker([latitude, longitude], {icon: greenIcon}).addTo(map);
+	}
+	else {
+		var redIcon = new L.Icon({
+			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+			shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+			iconSize: [25, 41],
+			iconAnchor: [12, 41],
+			popupAnchor: [1, -34],
+			shadowSize: [41, 41]});
+		var marker = L.marker([latitude, longitude], {icon: redIcon}).addTo(map);	
+	}
+    marker.bindPopup(`Latitude: ${latitude} °<br> Longitude: ${longitude} °<br> Temperature: ${tmp} °C`);
+  });
+  //mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °, ${tmp}`;
+  
+}
+
+
+function error() {
+  status.textContent = 'Unable to retrieve your location';
+}
+
+if(!navigator.geolocation) {
+  status.textContent = 'Geolocation is not supported by your browser';
+} else {
+  status.textContent = 'Locating…';
+  navigator.geolocation.getCurrentPosition(success, error);
+}
+
+}
+
+document.querySelector('#find-me').addEventListener('click', geoFindMe);
+
+</script> 
+
+  </body>
+</html>
